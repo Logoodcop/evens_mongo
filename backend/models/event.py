@@ -15,4 +15,4 @@ class Event(BaseModel):
     image_url: Optional[HttpUrl] = None
     ticket_price: Optional[float] = Field(None, ge=0)
     max_attendees: Optional[int] = Field(None, gt=0)
-    tags: List[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)s
