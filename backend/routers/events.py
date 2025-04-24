@@ -1,27 +1,20 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException
+from models.event import Event
+from services.event_service import create_event, get_event, list_events
 
-router = APIRouter(prefix="/events", tags=["events"])
+router = APIRouter()
 
-# Endpoint para publicar evento
-@router.post("/{event_id}/publish", response_model=Event)
-async def publish_event(event_id: str):
-    # Lógica para cambiar estado a "published"
-    pass
+@router.post("/", response_model=Event)
+def create_event_endpoint(event: Event):
+    return create_event(event)
 
-# Endpoint para cancelar evento  
-@router.post("/{event_id}/cancel", response_model=Event)
-async def cancel_event(event_id: str, reason: str):
-    # Lógica para cancelar
-    pass
+@router.get("/{event_id}", response_model=Event)
+def get_event_endpoint(event_id: str):
+    event = get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return event
 
-# Endpoint para subir imagen
-@router.post("/{event_id}/upload-image")
-async def upload_event_image(event_id: str, image: UploadFile):
-    # Lógica para subir imagen
-    pass
-
-# Endpoint para registrar asistente
-@router.post("/{event_id}/register")
-async def register_attendee(event_id: str, user_id: str):
-    # Lógica de registro
-    pass
+@router.get("/", response_model=list[Event])
+def list_events_endpoint():
+    return list_events()
