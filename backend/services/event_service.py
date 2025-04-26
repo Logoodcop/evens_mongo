@@ -30,3 +30,32 @@ def list_events() -> List[Event]:
         del doc["_id"]                                 
         events.append(Event(**doc))                    
     return events
+
+def update_event(event_id: str, updated_event: Event) -> Optional[Event]:
+    """Actualiza un evento por su ID y retorna el evento actualizado o None si no existe."""
+    data = updated_event.dict(by_alias=True, exclude={"id"})
+    result = db.db["events"].find_one_and_update(
+        {"_id": ObjectId(event_id)},
+        {"$set": data},
+        return_document=True
+    )
+    if result:
+        result["id"] = str(result["_id"])
+        del result["_id"]
+        return Event(**result)
+    return None
+
+
+# services/event_service.py
+def delete_event(event_id: str) -> bool:
+    try:
+        # Asegúrate que el ID sea válido
+        if not ObjectId.is_valid(event_id):
+            return False
+            
+        result = db.db["events"].delete_one({"_id": ObjectId(event_id)})
+        return result.deleted_count > 0
+        
+    except Exception as e:
+        print("Error eliminando:", str(e))
+        return False

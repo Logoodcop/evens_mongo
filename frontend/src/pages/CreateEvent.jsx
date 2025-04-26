@@ -1,10 +1,6 @@
-import React, { useState } from 'react'
-import eventService from '../api/eventService'
-
-// Convierte 'YYYY-MM-DDTHH:MM' a ISO 8601 para la API
-function formatToISO(dateLocal) {
-  return new Date(dateLocal).toISOString()
-}
+import React, { useState } from 'react';
+import eventService from '../api/eventService';
+import { useNavigate } from 'react-router-dom';
 
 export default function CreateEvent() {
   const [form, setForm] = useState({
@@ -13,102 +9,120 @@ export default function CreateEvent() {
     start_time: '',
     end_time: '',
     location: ''
-  })
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(null)
+  });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleChange = e => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-  }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
 
-  const handleSubmit = async e => {
-    e.preventDefault()
-    setError(null)
-    setSuccess(null)
-    try {
-      const eventData = {
-        name: form.name,
-        description: form.description,
-        start_time: formatToISO(form.start_time),
-        end_time: formatToISO(form.end_time),
-        location: form.location
-      }
-      // Añadimos _id null directamente en la llamada
-      await eventService.create(eventData)
-      setSuccess('Evento creado correctamente')
-      setForm({ name: '', description: '', start_time: '', end_time: '', location: '' })
-    } catch (err) {
-      console.error('Error creating event:', err)
-      setError(err.message)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Validación básica
+    if (!form.name || !form.start_time || !form.end_time) {
+      setError('Nombre y fechas son requeridos');
+      return;
     }
-  }
+
+    try {
+      // Prepara los datos para el backend
+      const eventData = {
+        _id: null,  // ← Importante para tu backend
+        name: form.name.trim(),
+        description: form.description.trim(),
+        start_time: new Date(form.start_time).toISOString(), // Formato ISO
+        end_time: new Date(form.end_time).toISOString(),
+        location: form.location.trim()
+      };
+
+      console.log('Enviando a backend:', eventData); // Para debug
+
+      await eventService.create(eventData);
+      
+      // Éxito: redirigir y limpiar
+      navigate('/');
+    } catch (err) {
+      console.error('Error creando evento:', err);
+      setError(err.message || 'Error al crear evento');
+    }
+  };
 
   return (
-    <div className="max-w-lg mx-auto mt-8 p-6 bg-white shadow rounded">
-      <h2 className="text-2xl font-semibold mb-4">Crear Evento</h2>
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      {success && <p className="text-green-500 mb-2">{success}</p>}
+    <div className="max-w-lg mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-4">Crear Evento</h2>
+      
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium">Nombre</label>
+          <label className="block mb-1">Nombre*</label>
           <input
             type="text"
             name="name"
             value={form.name}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded p-2"
+            className="w-full p-2 border rounded"
             required
           />
         </div>
+
         <div>
-          <label className="block text-sm font-medium">Descripción</label>
+          <label className="block mb-1">Descripción</label>
           <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded p-2"
+            className="w-full p-2 border rounded"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium">Inicio</label>
-          <input
-            type="datetime-local"
-            name="start_time"
-            value={form.start_time}
-            onChange={handleChange}
-            className="mt-1 block w-full border rounded p-2"
-            required
-          />
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block mb-1">Inicio*</label>
+            <input
+              type="datetime-local"
+              name="start_time"
+              value={form.start_time}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+          <div>
+            <label className="block mb-1">Fin*</label>
+            <input
+              type="datetime-local"
+              name="end_time"
+              value={form.end_time}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
         </div>
+
         <div>
-          <label className="block text-sm font-medium">Fin</label>
-          <input
-            type="datetime-local"
-            name="end_time"
-            value={form.end_time}
-            onChange={handleChange}
-            className="mt-1 block w-full border rounded p-2"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Ubicación</label>
+          <label className="block mb-1">Ubicación</label>
           <input
             type="text"
             name="location"
             value={form.location}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded p-2"
+            className="w-full p-2 border rounded"
           />
         </div>
+
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
         >
           Crear Evento
         </button>
       </form>
     </div>
-  )
+  );
 }
